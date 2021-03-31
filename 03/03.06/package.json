@@ -1,0 +1,13 @@
+{
+  "name": "docker-od-podstaw-nodejs",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "Damian Naprawa",
+  "main": "./src/server.js",
+  "scripts": {
+    "start": "node ./src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+} 

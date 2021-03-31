@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  mywordpress:
+    image: wordpress
+    restart: always
+    ports:
+      - 9012:80
+    env_file: wordpress_env_file
+    volumes:
+      - wordpress-volume:/var/www/html
+  db:
+    image: mysql:5.7
+    restart: always
+    env_file: mysql_env_file
+    volumes:
+      - db-vol:/var/lib/mysql
+
+volumes:
+  wordpress-volume:
+  db-vol:

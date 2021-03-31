@@ -1,0 +1,11 @@
+.App {
+  margin: 50px 150px;
+}
+
+.project-details {
+  margin-top: 50px;
+}
+
+td {
+  cursor: pointer;
+}

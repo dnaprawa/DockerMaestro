@@ -1,0 +1,20 @@
+version: "3.7"
+
+# odpowiednik
+# docker volume create nginx-volume
+# docker container run -p 8080:80 \
+# -v nginx-volume:/usr/share/nginx/html \
+# --name nginx1 nginx:1.17
+
+services:
+  mynginx:
+    image: nginx:1.17
+    container_name: nginx1
+    ports:
+      - 8080:80
+    volumes:
+      - nginx-volume:/usr/share/nginx/html
+
+volumes:
+  nginx-volume:
+    name: nginx-volume

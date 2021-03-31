@@ -1,0 +1,20 @@
+{
+  "name": "projectz",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "author": "Damian Naprawa",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "nodemon src/server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "jest": "^25.2.7",
+    "nodemon": "^2.0.2"
+  }
+}

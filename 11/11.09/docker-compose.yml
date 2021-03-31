@@ -1,0 +1,50 @@
+version: "3.2"
+
+services:
+  mvc_reverseproxy:
+    image: nginx:1.17.9
+    container_name: mvc_reverseproxy
+    depends_on: 
+      - mvc-web
+      - mvc-db
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/mvc/nginx.conf:/etc/nginx/nginx.conf"
+      - "/var/mvc/domain.crt:/etc/nginx/domain.crt"
+      - "/var/mvc/domain.key:/etc/nginx/domain.key"
+    networks:
+      - linuxaspnetcore
+    restart: always
+
+  mvc-web:
+    build: .
+    container_name: mvc-web
+    depends_on: mvc-db
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+    depends_on:
+      - mvc-db
+    networks:
+      - linuxaspnetcore
+    restart: always
+
+  mvc-db:
+    image: "mcr.microsoft.com/mssql/server:2019-GA-ubuntu-16.04"
+    container_name: mvc-db
+    environment:
+      MSSQL_SA_PASSWORD: "3XSsBjPkcnfR"
+      SA_PASSWORD: "3XSsBjPkcnfR"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - linuxaspnetcoredata:/var/opt/mssql
+    networks:
+      - linuxaspnetcore
+    restart: always
+
+volumes:
+  linuxaspnetcoredata:
+
+networks:
+  linuxaspnetcore:

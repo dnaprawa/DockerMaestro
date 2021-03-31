@@ -1,0 +1,60 @@
+version: '3.7'
+
+services:
+
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://${HOSTNAME}:${PORT}'
+        registry_external_url 'http://${HOSTNAME}:${REGISTRY_PORT}'
+        gitlab_rails['initial_root_password'] = 'password123'
+        gitlab_rails['initial_shared_runners_registration_token'] = 'runner_t0ken'
+    ports:
+      - "${PORT}:${PORT}"
+      - "${REGISTRY_PORT}:${REGISTRY_PORT}"
+    volumes:
+      - /srv/gitlab/config:/etc/gitlab
+      - /srv/gitlab/logs:/var/log/gitlab
+      - /srv/gitlab/data:/var/opt/gitlab
+    networks:
+      default:
+        aliases:
+          - "${HOSTNAME}"
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+    depends_on:
+      - gitlab
+
+  register-gitlab-runner:
+    image: gitlab/gitlab-runner:alpine
+    volumes:
+      - /srv/gitlab-runner/config:/etc/gitlab-runner
+    command:
+      - register
+      - --non-interactive
+      - --locked=false
+      - --run-untagged
+      - --name=GitLab Runner
+      - --tag-list=docker,dind
+      - --executor=docker
+      - --docker-image=docker:stable
+      - --docker-volumes=/var/run/docker.sock:/var/run/docker.sock
+      - --docker-network-mode=gitlab-default
+    environment:
+      - "CI_SERVER_URL=http://${HOSTNAME}:${PORT}"
+      - "REGISTRATION_TOKEN=runner_t0ken"
+    depends_on:
+      - gitlab
+      
+networks:
+  default:
+    name: gitlab-default

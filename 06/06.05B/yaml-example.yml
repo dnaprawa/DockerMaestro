@@ -1,0 +1,134 @@
+version: "3.8"
+x-default-environment: &default-environment
+  Vault__VaultAddress: http://vault:8200"
+  Vault__AuthenticationToken: 00000000-0000-0000-0000-000000000000
+
+x-connector-depends-on: &connector-depends-on
+  - postgres
+  - vault
+  - vault-initializer
+  - elasticsearch
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: api
+    ports:
+      - "${API_PORT:-8080}:5000"
+    restart: always
+    environment: *default-environment
+    depends_on:
+      - postgres
+      - vault
+      - vault-initializer
+      - elasticsearch
+
+  stash:
+    build:
+      context: .
+      dockerfile: Dockerfile.stash
+    container_name: stash
+    ports:
+      - "${STASH_PORT:-60001}:5000"
+    restart: always
+    environment: *default-environment
+    depends_on:
+      - postgres
+      - vault
+      - vault-initializer
+      - elasticsearch
+
+  snow-incident:
+    build:
+      context: .
+      dockerfile: Dockerfile.snow
+    container_name: snow-incident
+    environment:
+      TableName: Incident
+      <<: *default-environment
+    restart: always
+    depends_on: *connector-depends-on
+
+  snow-incidentsla:
+    build:
+      context: .
+      dockerfile: Dockerfile.snow
+    container_name: snow-incidentsla
+    environment:
+      TableName: IncidentSLA
+      <<: *default-environment
+    restart: always
+    depends_on: *connector-depends-on
+
+  postgres:
+    container_name: postgres
+    image: container-registry:5089/postgres:10
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_PASSWORD: Vue@1kw8
+      POSTGRES_USER: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  vault:
+    image: container-registry:5089/vault:1.3.2
+    container_name: vault
+    ports:
+      - "${VAULT_PORT:-8200}:8200"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_DEV_ROOT_TOKEN_ID=00000000-0000-0000-0000-000000000000
+    volumes:
+      - vaultdata:/vault
+    restart: unless-stopped
+
+  vault-initializer:
+    build:
+      context: .
+      dockerfile: Dockerfile.vaultinit
+    container_name: vault-initializer
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=http://vault:8200
+    depends_on:
+      - "vault"
+
+  elasticsearch:
+    image: container-registry:5089/elasticsearch:7.5.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - http.port=9200
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:1358,http://127.0.0.1:1358,http://dejavu-dev:1358
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-credentials=true
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "${ELASTIC_PORT_1:-9200}:9200"
+      - "${ELASTIC_PORT_2:-9300}:9300"
+    volumes:
+      - elasticdata:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  dejavu:
+    image: container-registry:5089/dejavu:3.3.0
+    container_name: dejavu
+    ports:
+      - "${DEJA_VU_PORT:-1358}:1358"
+    links:
+      - elasticsearch
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  vaultdata:
+  elasticdata:

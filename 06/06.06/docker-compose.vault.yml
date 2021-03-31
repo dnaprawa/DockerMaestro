@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  vault:
+    image: vault:1.3.2
+    ports:
+      - 8200:8200
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_DEV_ROOT_TOKEN_ID=00000000-0000-0000-0000-000000000000
+    volumes:
+      - vaultdata:/vault
+
+volumes:
+  vaultdata:
+
+networks:
+  default:
+    external: true
+    name: myproject-external-network

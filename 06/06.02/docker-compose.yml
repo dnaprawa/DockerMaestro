@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  ui: #React UI
+    image: projectz-ui
+    build:
+      context: ./ui
+      args:
+        NODE_ENV: production
+        REACT_APP_SERVICE_HOST: http://localhost:8080
+    ports:
+      - "3000:80"
+
+  services: #NodeJS backend
+    image: projectz-svc
+    build:
+      context: ./services
+      args:
+        NODE_ENV: production
+        PORT: "80"
+    ports:
+      - "8080:80"

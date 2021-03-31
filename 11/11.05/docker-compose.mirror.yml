@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  frontend:
+    image: konradkleine/docker-registry-frontend:v2
+    container_name: registry-ui
+    ports:
+      - "0.0.0.0:8443:443"
+    volumes:
+      - /var/myregistry/certs/domain.crt:/etc/apache2/server.crt:ro
+      - /var/myregistry/certs/domain.key:/etc/apache2/server.key:ro
+    environment:
+      # The front-end is SSL protected
+      - ENV_USE_SSL=yes
+      - ENV_DOCKER_REGISTRY_HOST=<machine_fqdn_here>
+      - ENV_DOCKER_REGISTRY_PORT=5043
+      # The registry is SSL protected as well
+      - ENV_DOCKER_REGISTRY_USE_SSL=1
+    restart: always
+
+  # Setup registry
+  registry:
+    image: registry:2
+    container_name: registry
+    environment:
+      - REGISTRY_HTTP_ADDR=0.0.0.0:443
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt
+      - REGISTRY_HTTP_TLS_KEY=/certs/domain.key
+      - REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io
+    volumes:
+      - /var/myregistry/certs:/certs
+      - /var/myregistry/data:/var/lib/registry:rw
+      - /var/myregistry/auth:/auth
+    ports:
+      - "5043:443"
+    restart: always

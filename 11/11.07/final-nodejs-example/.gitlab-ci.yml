@@ -1,0 +1,49 @@
+image: docker:19.03.8
+
+services:
+  - name: docker:dind
+    command: ["--insecure-registry=$REGISTRY_URL"]
+
+before_script:
+  - docker info
+  - docker login -u $REGISTRY_USER -p $REGISTRY_PASS $REGISTRY_URL
+
+build:
+  stage: build
+  script:
+    - docker image build --tag myapp:$CI_COMMIT_SHA --tag myapp:latest .
+    - docker image build --no-cache --build-arg token=$SCANNER_TOKEN --tag myapp:ci -f Dockerfile.ci .
+    # --continue-on-failure if we want to continue even if high severity issues are found
+    - docker image tag myapp:$CI_COMMIT_SHA $REGISTRY_URL/myapp:$CI_COMMIT_SHA
+    - docker image tag myapp:latest $REGISTRY_URL/myapp:latest 
+    - docker image push $REGISTRY_URL/myapp:$CI_COMMIT_SHA
+    - docker image push $REGISTRY_URL/myapp:latest
+
+trivy:
+  stage: test
+  image: docker:19.03.8
+  services:
+    - name: docker:dind 
+  variables:
+    IMAGE: myapp:$CI_COMMIT_SHA
+  before_script:
+    - apk add --no-cache curl
+    - export VERSION=$(curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+    - echo $VERSION
+    - wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+    - tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
+  allow_failure: true
+  script:
+    # Build report
+    - ./trivy --exit-code 0 --cache-dir .trivycache/ --no-progress --format template --template "@contrib/gitlab.tpl" -o gl-container-scanning-report.json $IMAGE
+    # Print report
+    - ./trivy --exit-code 0 --cache-dir .trivycache/ --no-progress --severity HIGH $IMAGE
+    # Fail on high and critical vulnerabilities
+    - ./trivy --exit-code 1 --cache-dir .trivycache/ --severity CRITICAL --no-progress $IMAGE
+  cache:
+    paths:
+      - .trivycache/
+  # Enables https://docs.gitlab.com/ee/user/application_security/container_scanning/ (Container Scanning report is available on GitLab EE Ultimate or GitLab.com Gold)
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json

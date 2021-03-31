@@ -1,0 +1,16 @@
+image: docker:19.03.8
+
+services:
+  - name: docker:dind
+    command: ["--insecure-registry=$REGISTRY_URL"]
+
+before_script:
+  - docker info
+  - docker login -u $REGISTRY_USER -p $REGISTRY_PASS $REGISTRY_URL
+
+build:
+  stage: build
+  script:
+    - docker image build --tag myapp:$CI_COMMIT_SHA --tag myapp:latest .
+    - docker image tag myapp:$CI_COMMIT_SHA $REGISTRY_URL/myapp:$CI_COMMIT_SHA
+    - docker image push $REGISTRY_URL/myapp:$CI_COMMIT_SHA
