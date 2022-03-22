@@ -2,7 +2,7 @@ version: "3.2"
 
 services:
   mvc_reverseproxy:
-    image: nginx:1.17.9
+    image: nginx:1.21.6
     container_name: mvc_reverseproxy
     depends_on: 
       - mvc-web
