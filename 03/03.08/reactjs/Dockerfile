@@ -1,5 +1,5 @@
 # Stage 1
-FROM node:13.10 as development
+FROM node:17.7.2-buster-slim as development
 
 ARG NODE_ENV=production
 ENV NODE_ENV $NODE_ENV
@@ -18,7 +18,7 @@ FROM development AS builder
 RUN npm run build
 
 # Stage 3 - the production environment
-FROM nginx:1.17.9 AS production
+FROM nginx:1.21.6 AS production
 COPY --from=builder /code/build /usr/share/nginx/html
 
 CMD ["nginx", "-g", "daemon off;"]
