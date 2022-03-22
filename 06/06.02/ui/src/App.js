@@ -60,7 +60,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <h1>Zmienilem cos</h1>
+        <h1>Project App</h1>
         <div className="project-list">
           { this.state.isLoading
             ? <span>Loading...</span>

@@ -1,18 +1,18 @@
-FROM node:lts
+FROM node:17.7.2-buster-slim
 
 ARG NODE_ENV=production
 ENV NODE_ENV $NODE_ENV
 
-WORKDIR /code
+WORKDIR /app
 
 ARG PORT=80
 ENV PORT $PORT
 
-COPY package.json /code/package.json
-COPY package-lock.json /code/package-lock.json
+COPY package.json package-lock.json ./
+
 RUN npm ci
 
-COPY . /code
+COPY . /app
 
 CMD ["node", "src/server.js"]
 

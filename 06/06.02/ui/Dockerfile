@@ -1,4 +1,4 @@
-FROM node:lts as build
+FROM node:17.7.2-buster-slim as build
 
 ARG NODE_ENV=production
 ENV NODE_ENV $NODE_ENV
@@ -14,7 +14,7 @@ RUN npm ci
 COPY . /code
 RUN npm run build
 
-FROM nginx:1.17.1
+FROM nginx:1.21.6
 
 COPY --from=build /code/build /usr/share/nginx/html
 
